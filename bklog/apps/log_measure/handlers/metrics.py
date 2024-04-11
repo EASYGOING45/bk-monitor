@@ -103,7 +103,7 @@ class BaseMetricCollector(object):
 
         # 上报时间
         self.collect_interval = collect_interval
-        timestamp = arrow.now().timestamp
+        timestamp = arrow.now().int_timestamp
         self.report_ts = timestamp // self.collect_interval * self.collect_interval
 
     @property

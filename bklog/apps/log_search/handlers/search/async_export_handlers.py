@@ -237,7 +237,7 @@ class AsyncExportHandlers(object):
     @classmethod
     def judge_retry_able(cls, end_time, retention):
         if retention and end_time:
-            return arrow.now() < arrow.get(end_time, tzinfo=settings.TIME_ZONE).shift(days=retention)
+            return arrow.now() < arrow.get(end_time).to(settings.TIME_ZONE).shift(days=retention)
         return True
 
     @classmethod

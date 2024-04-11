@@ -366,7 +366,7 @@ class PatternHandler:
             )
             .first()
         )
-        now = int(arrow.now().timestamp * 1000)
+        now = arrow.now().int_timestamp * 1000
         # 如果不存在则新建  同时同步其它signature或origin_pattern相同的ClusteringRemark
         if method == "create":
             remark_info = {"username": get_request_username(), "create_time": now, "remark": params["remark"]}

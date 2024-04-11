@@ -276,7 +276,7 @@ class EtlHandler(object):
         fmt = fmts.get(time_format)
         if fmt["name"] in [ISO_8601_TIME_FORMAT_NAME, "ISO8601"]:
             try:
-                epoch_second = arrow.get(data, tzinfo=f"GMT{time_zone}").timestamp
+                epoch_second = arrow.get(data).to(f"GMT{time_zone}").int_timestamp
             except Exception:  # pylint: disable=broad-except
                 raise EtlParseTimeFormatException()
         else:
@@ -287,7 +287,7 @@ class EtlHandler(object):
                 epoch_second = str(data)[0:10]
             else:
                 try:
-                    epoch_second = arrow.get(data, fmt["name"], tzinfo=f"GMT{time_zone}").timestamp
+                    epoch_second = arrow.get(data, fmt["name"]).to(f"GMT{time_zone}").int_timestamp
                 except Exception:  # pylint: disable=broad-except
                     raise EtlParseTimeFormatException()
         return {"epoch_millis": f"{epoch_second}000"}

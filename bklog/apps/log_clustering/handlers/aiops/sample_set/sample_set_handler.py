@@ -115,7 +115,7 @@ class SampleSetHandler(BaseAiopsHandler):
         @param sample_set_id int 样本集id
         """
         collect_config_request = CollectConfigsCls(sample_set_id=sample_set_id, project_id=self.conf.get("project_id"))
-        target_time = int(arrow.now().timestamp)
+        target_time = arrow.now().int_timestamp
         collect_config_request.collect_config["config"]["end_time"] = target_time
         collect_config_request.collect_config["config"]["start_time"] = target_time
         request_dict = self._set_username(collect_config_request)

@@ -83,7 +83,7 @@ class EBPFHandler:
         """
         字符串时间 --> 时间戳, 单位 us
         """
-        t = arrow.get(str_time).replace(tzinfo=settings.TIME_ZONE)
+        t = arrow.get(str_time).to(settings.TIME_ZONE)
         return int(t.float_timestamp * 1000 * 1000)
 
     @classmethod

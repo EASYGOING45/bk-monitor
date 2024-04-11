@@ -589,7 +589,7 @@ class SearchHandler(object):
                 if type(self.start_time) in [int, float]:
                     start_time = arrow.get(self.start_time).to(tz=tz_info).datetime
                 else:
-                    start_time = arrow.get(self.start_time).replace(tzinfo=tz_info).datetime
+                    start_time = arrow.get(self.start_time).to(tz_info).datetime
                 storage_cluster_record_objs = StorageClusterRecord.objects.filter(
                     index_set_id=int(self.index_set_id), created_at__gt=(start_time - datetime.timedelta(hours=1))
                 ).exclude(storage_cluster_id=self.storage_cluster_id)

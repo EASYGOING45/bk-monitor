@@ -112,7 +112,7 @@ class BaseDocument(Document):
 
         # 如果没有提供索引，则根据开始和结束时间去生成索引列表
         if not start_time:
-            start_time = arrow.now().replace(days=-days).floor("day")
+            start_time = arrow.now().shift(days=-days).floor("day")
         else:
             start_time = arrow.get(start_time).floor("day")
         if not end_time:

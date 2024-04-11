@@ -1065,7 +1065,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         更新持续发布配置
         @param model_id 模型id
         """
-        target_time = int(arrow.now().shift(hours=TRAINING_HOUR).timestamp)
+        target_time = arrow.now().shift(hours=TRAINING_HOUR).int_timestamp
         update_training_schedule_request = UpdateTrainingScheduleCls(
             model_id=model_id, project_id=self.conf.get("project_id")
         )

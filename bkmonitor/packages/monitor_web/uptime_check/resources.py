@@ -244,7 +244,7 @@ class UptimeCheckTaskListResource(Resource):
 
         # 多线程接口调用
         th_list = []
-        end = arrow.utcnow().timestamp
+        end = arrow.utcnow().int_timestamp
         for protocol, data in query_group.items():
             table_name = "{}.{}".format(UPTIME_CHECK_DB, protocol.lower())
             for period, task_id_list in data.items():
@@ -789,7 +789,7 @@ class TaskDataResource(Resource):
     @staticmethod
     def make_select_param(task, value_filed_list, node_id, bk_biz_id=0):
         kwargs_list = []
-        end = arrow.utcnow().timestamp
+        end = arrow.utcnow().int_timestamp
         start = end - UPTIME_CHECK_SUMMARY_TIME_RANGE * 3600
 
         filter_dict = {"task_id": str(task.id)}
@@ -918,9 +918,9 @@ class TaskDetailResource(Resource):
 
         # 如果任务创建时间距离当前时间小于12小时，则默认展示时间范围为创建时间到当前时间，group_by minute1
         create_time, end = get_timestamp_range_by_biz_date(localtime(task.create_time))
-        task_created_passed_by_hours = (arrow.utcnow().timestamp - create_time) / 3600
+        task_created_passed_by_hours = (arrow.utcnow().int_timestamp - create_time) / 3600
 
-        end = arrow.utcnow().timestamp
+        end = arrow.utcnow().int_timestamp
         if data.get("time_range"):
             start, end = parse_time_range(data["time_range"])
         elif task_created_passed_by_hours < UPTIME_CHECK_TASK_DETAIL_GROUP_BY_MINUTE1_TIME_RANGE:
@@ -1314,7 +1314,7 @@ class GetBeatDataResource(Resource):
         bk_biz_id = serializers.CharField(required=True, label="业务ID")
 
     def perform_request(self, data):
-        end = arrow.utcnow().timestamp
+        end = arrow.utcnow().int_timestamp
         start = end - 180
         data_source_class = load_data_source(DataSourceLabel.PROMETHEUS, DataTypeLabel.TIME_SERIES)
         condition_statement = []
@@ -1494,7 +1494,7 @@ class FrontPageDataResource(Resource):
         后台需要多进程查询三个表，将结果汇总到前端展示
         """
         result = []
-        end = arrow.utcnow().timestamp
+        end = arrow.utcnow().int_timestamp
         start = end - UPTIME_CHECK_TASK_DETAIL_GROUP_BY_MINUTE1_TIME_RANGE * 3600
 
         for task in tasks:
@@ -2650,7 +2650,7 @@ class GetRecentTaskDataResource(Resource):
         # 获取某个node_id最近一个采集周期内的可用率和响应时间，如果没有则说明不可用
         bk_biz_id = uptime_check_task.bk_biz_id
         interval = 60
-        now = arrow.utcnow().timestamp
+        now = arrow.utcnow().int_timestamp
 
         protocol = uptime_check_task.protocol.lower()
         period = uptime_check_task.get_period()

@@ -68,7 +68,7 @@ def mysql_time(value):
         if timezone.is_aware(value):
             return value
         else:
-            return arrow.get(value).replace(tzinfo=timezone.get_current_timezone_name()).datetime
+            return arrow.get(value).to(timezone.get_current_timezone_name()).datetime
     else:
         if timezone.is_aware(value):
             return arrow.get(value).to(timezone.get_current_timezone_name()).naive
@@ -80,7 +80,7 @@ def biz_time_zone_offset():
     """
     获取业务的时区偏移
     """
-    offset = arrow.now().replace(tzinfo=timezone.get_current_timezone().zone).format("Z")
+    offset = arrow.now().to(timezone.get_current_timezone().zone).format("Z")
     return str(offset[0]) + str(int(offset[1:3]))  # 转成小时的精度, 而不是分钟
 
 
@@ -97,7 +97,7 @@ def biz2utc_str(local_time, _format="%Y-%m-%d %H:%M:%S"):
     功能: 业务时间字符串 转换成 零时区字符串
     场景: 界面传过来的时间需要转换成零时区去查询db或调用API
     """
-    return arrow.get(local_time).replace(tzinfo=timezone.get_current_timezone().zone).to("utc").strftime(_format)
+    return arrow.get(local_time).to(timezone.get_current_timezone().zone).to("utc").strftime(_format)
 
 
 def utc2biz_str(utc_time, _format="%Y-%m-%d %H:%M:%S"):
@@ -123,7 +123,7 @@ def get_timestamp_range_by_biz_date(date):
     功能: 解析从浏览器传过来的日期格式字符串, 转成时间戳timestamp格式
     @return tuple(timestamp(unit: s), timestamp(unit: s))
     """
-    start_timestamp = arrow.get(date).replace(tzinfo=timezone.get_current_timezone().zone).timestamp
+    start_timestamp = arrow.get(date).to(timezone.get_current_timezone().zone).int_timestamp
     end_timestamp = start_timestamp + 86400  # 24 * 3600
     return start_timestamp, end_timestamp
 
@@ -230,20 +230,20 @@ def utc2date(_utc, _format="%Y-%m-%d %H:%M"):
 def get_datetime_range(period, distance, now=None, rounding=True):
     now = now or localtime(timezone.now())
     if period == "minute":
-        begin = arrow.get(now).replace(minutes=-distance)
+        begin = arrow.get(now).shift(minutes=-distance)
         end = arrow.get(now)
         if rounding:
             begin = begin.ceil("minute")
             end = end.ceil("minute")
 
     elif period == "day":
-        begin = arrow.get(now).replace(days=-distance)
+        begin = arrow.get(now).shift(days=-distance)
         end = arrow.get(now)
         if rounding:
             begin = begin.ceil("day")
             end = end.ceil("day")
     elif period == "hour":
-        begin = arrow.get(now).replace(hours=-distance)
+        begin = arrow.get(now).shift(hours=-distance)
         end = arrow.get(now)
         if rounding:
             begin = begin.ceil("hour")
@@ -347,15 +347,15 @@ def parse_time_compare_abbreviation(time_offset: Union[int, str]) -> int:
 
 
 def datetime_str_to_datetime(datetime_str, format, time_zone=0):
-    return arrow.get(datetime.datetime.strptime(datetime_str, format)).replace(hours=time_zone).datetime
+    return arrow.get(datetime.datetime.strptime(datetime_str, format)).shift(hours=time_zone).datetime
 
 
 def timestamp_to_tz_datetime(timestamp, offset):
-    return arrow.get(timestamp).replace(hours=offset).datetime
+    return arrow.get(timestamp).shift(hours=offset).datetime
 
 
 def datetime_to_tz_timestamp(datetime, offset):
-    return arrow.get(datetime).replace(hours=-offset).timestamp
+    return arrow.get(datetime).shift(hours=-offset).int_timestamp
 
 
 def datetime2str(date_time: datetime.datetime, format="%Y-%m-%d %H:%M:%S"):

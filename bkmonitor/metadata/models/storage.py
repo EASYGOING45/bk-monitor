@@ -257,9 +257,9 @@ class ClusterInfo(models.Model):
                 "custom_option": self.custom_option,
                 "registered_system": self.registered_system,
                 "creator": self.creator,
-                "create_time": arrow.get(self.create_time).timestamp,
+                "create_time": arrow.get(self.create_time).int_timestamp,
                 "last_modify_user": self.last_modify_user,
-                "last_modify_time": arrow.get(self.last_modify_time).timestamp,
+                "last_modify_time": arrow.get(self.last_modify_time).int_timestamp,
                 "is_default_cluster": self.is_default_cluster,
             },
             "cluster_type": self.cluster_type,
@@ -2034,7 +2034,7 @@ class ESStorage(models.Model, StorageResultTable):
 
     @property
     def now(self):
-        return arrow.utcnow().replace(hours=self.time_zone).datetime
+        return arrow.utcnow().shift(hours=self.time_zone).datetime
 
     def is_red(self):
         """判断 es 集群是否 red"""

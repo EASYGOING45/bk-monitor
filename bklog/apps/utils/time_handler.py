@@ -391,12 +391,12 @@ def _customize_time_range(start_time, end_time, local_time_zone):
         end_time = end_time.replace("&nbsp;", " ")
 
     if start_time:
-        _start_time = arrow.get(start_time, tzinfo=local_time_zone)
+        _start_time = arrow.get(start_time).to(local_time_zone)
     else:
         _start_time = arrow.now(local_time_zone).shift(minutes=-15)
     # end time
     if end_time:
-        _end_time = arrow.get(end_time, tzinfo=local_time_zone)
+        _end_time = arrow.get(end_time).to(local_time_zone)
     else:
         _end_time = arrow.now(local_time_zone)
 

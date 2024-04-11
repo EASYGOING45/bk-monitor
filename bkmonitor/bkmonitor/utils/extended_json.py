@@ -62,7 +62,7 @@ class CustomJSONDecoder(json.JSONDecoder):
         type_ = SUPPORTED_TYPES_NAME2CLASS.get(d.get("__type__"))
         if type_ in SUPPORTED_TYPES:
             if issubclass(type_, (datetime, date, time)):
-                dt = arrow.get(d.get("__value__")).replace(tzinfo="local").naive
+                dt = arrow.get(d.get("__value__")).to("local").naive
                 if type_ is datetime:
                     return dt
                 elif type_ is date:
