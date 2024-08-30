@@ -2161,7 +2161,7 @@ class ESStorage(models.Model, StorageResultTable):
         :return: {
             "datetime_object": max_datetime_object,
             "index": 0,
-            "size": 123123,  # index大小，单位byte
+            "size": 123123,  # index大小,单位byte
         }
         """
         indices, index_version = self.get_index_stats()
@@ -2182,7 +2182,7 @@ class ESStorage(models.Model, StorageResultTable):
             re_result = index_re.match(stat_index_name)
             if re_result is None:
                 # 去掉一个整体index的计数
-                logger.warning("index->[%s] is not match re, maybe something go wrong?", stat_index_name)
+                logger.warning("index->[%s] is not match re,re->[%s],re_result->[%s],maybe something go wrong?", stat_index_name, index_re, re_result)
                 continue
 
             # 获取实际的count及时间对象
