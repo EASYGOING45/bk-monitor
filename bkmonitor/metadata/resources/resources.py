@@ -26,6 +26,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from kafka import KafkaConsumer, TopicPartition
 from kubernetes import utils
@@ -232,7 +233,8 @@ class ListResultTableResource(Resource):
         bk_biz_id = serializers.IntegerField(required=False, label="获取指定业务下的结果表信息", default=None)
         with_option = serializers.BooleanField(required=False, label="是否包含option字段信息", default=True)
         is_public_include = serializers.IntegerField(required=False, label="是否包含全业务结果表", default=None)
-        is_config_by_user = serializers.BooleanField(required=False, label="是否需要包含非用户定义的结果表", default=True)
+        is_config_by_user = serializers.BooleanField(required=False, label="是否需要包含非用户定义的结果表",
+                                                     default=True)
 
     def perform_request(self, request_data):
         # 获取bcs相关的dataid
@@ -288,7 +290,7 @@ class ListResultTableResource(Resource):
             offset = (request_data["page"] - 1) * request_data["page_size"]
 
             result_table_id_list = list(
-                result_table_queryset.values_list("table_id", flat=True)[offset : offset + limit]
+                result_table_queryset.values_list("table_id", flat=True)[offset: offset + limit]
             )
             result_list = models.ResultTable.batch_to_json(
                 result_table_id_list=result_table_id_list, with_option=request_data["with_option"]
@@ -914,7 +916,7 @@ class QueryEventGroupResource(Resource):
         if page_size > 0:
             count = query_set.count()
             offset = (validated_request_data["page"] - 1) * page_size
-            paginated_queryset = query_set[offset : offset + page_size]
+            paginated_queryset = query_set[offset: offset + page_size]
             events = self._compose_in_event(paginated_queryset)
             return {"count": count, "info": events}
 
@@ -1293,7 +1295,7 @@ class QueryTimeSeriesGroupResource(Resource):
         if page_size > 0:
             count = query_set.count()
             offset = (validated_request_data["page"] - 1) * page_size
-            paginated_query_set = query_set[offset : offset + page_size]
+            paginated_query_set = query_set[offset: offset + page_size]
             results = list(chain.from_iterable(instance.to_json_v2() for instance in paginated_query_set))
             return {"count": count, "info": results}
 
@@ -1304,7 +1306,8 @@ class QueryBCSMetricsResource(Resource):
     """查询bcs相关指标"""
 
     class RequestSerializer(serializers.Serializer):
-        bk_biz_ids = serializers.ListField(required=False, label="业务ID", default=None, child=serializers.IntegerField())
+        bk_biz_ids = serializers.ListField(required=False, label="业务ID", default=None,
+                                           child=serializers.IntegerField())
         cluster_ids = serializers.ListField(required=False, label="BCS集群ID", default=None)
         dimension_name = serializers.CharField(required=False, label="指标名称", default="")
         dimension_value = serializers.CharField(required=False, label="指标取值", default="")
@@ -1358,13 +1361,13 @@ class QueryBCSMetricsResource(Resource):
             }
 
     def _refine_metric_dimensions_from_redis(
-        self,
-        bk_biz_ids: List,
-        cluster_ids: List,
-        dimension_name: str,
-        dimension_value: str,
-        metric_datas: Dict,
-        built_in_metric_field_list: List,
+            self,
+            bk_biz_ids: List,
+            cluster_ids: List,
+            dimension_name: str,
+            dimension_value: str,
+            metric_datas: Dict,
+            built_in_metric_field_list: List,
     ):
         """通过 redis 中获取指标和维度"""
         # 当参数 指标名称和指标值 的内容全部存在时，查询内置和自定义指标
@@ -1448,7 +1451,7 @@ class ListTransferClusterResource(Resource):
         _, node_list = consul_client.kv.get(config.CONSUL_TRANSFER_PATH, keys=True)
         node_child_name = set()
         for node in node_list or []:
-            name, _, _ = node[len(config.CONSUL_TRANSFER_PATH) :].partition("/")
+            name, _, _ = node[len(config.CONSUL_TRANSFER_PATH):].partition("/")
             node_child_name.add(name)
 
         black_transfer_cluster_id = settings.TRANSFER_BUILTIN_CLUSTER_ID or ""
@@ -2337,22 +2340,34 @@ class NotifyEsDataLinkAdaptNano(Resource):
                     is_config_by_user=True,
                 )
 
-                # 为dtEventTimestampNanos配置对应的Option
-                models.ResultTableFieldOption.objects.create(
-                    table_id=table_id,
-                    field_name=DT_TIME_STAMP_NANO,
-                    name='es_type',
-                    value=NANO_FORMAT,
-                    value_type='string',
-                )
+                # 通过复制的方式,生成dtEventTimestampNanos的option
+                original_objects = models.ResultTableFieldOption.objects.filter(table_id=table_id,
+                                                                                field_name='dtEventTimeStamp')
 
-                models.ResultTableFieldOption.objects.create(
-                    table_id=table_id,
-                    field_name=DT_TIME_STAMP_NANO,
-                    name='es_format',
-                    value=NON_STRICT_NANO_ES_FORMAT,
-                    value_type='string',
-                )
+                # 创建新对象，修改 field_name 为 'dtEventTimeStampNanos'
+                new_objects = []
+                for obj in original_objects:
+                    new_obj = models.ResultTableFieldOption(
+                        value_type=obj.value_type,
+                        value=obj.value,
+                        creator=obj.creator,
+                        create_time=timezone.now(),  # 设置创建时间为当前时间
+                        table_id=obj.table_id,
+                        field_name='dtEventTimeStampNanos',  # 更新 field_name
+                        name=obj.name
+                    )
+                    new_objects.append(new_obj)
+
+                models.ResultTableFieldOption.objects.bulk_create(new_objects)
+
+                models.ResultTableFieldOption.objects.filter(
+                    table_id=table_id, field_name='dtEventTimeStampNanos', name='es_type'
+                ).update(value=NANO_FORMAT)
+
+                models.ResultTableFieldOption.objects.filter(
+                    table_id=table_id, field_name='dtEventTimeStampNanos', name='es_format'
+                ).update(value=NON_STRICT_NANO_ES_FORMAT)
+
                 models.ResultTableFieldOption.objects.filter(
                     table_id=table_id, field_name='time', name='es_format'
                 ).update(value=NON_STRICT_NANO_ES_FORMAT)
@@ -2360,6 +2375,11 @@ class NotifyEsDataLinkAdaptNano(Resource):
                 models.ResultTableFieldOption.objects.filter(
                     table_id=table_id, field_name='dtEventTimeStamp', name='es_format'
                 ).update(value=NON_STRICT_NANO_ES_FORMAT)
+
+                models.ResultTableFieldOption.objects.filter(
+                    table_id=table_id, field_name='dtEventTimeStamp', name='es_type'
+                ).update(value='date')
+
         except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 'NotifyEsDataLinkAdaptNano: table_id->[%s] failed to adapt metadata for date_nano,' 'error->[%s]',

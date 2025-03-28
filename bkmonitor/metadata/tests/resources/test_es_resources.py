@@ -36,6 +36,15 @@ def create_or_delete_records(mocker):
         tag='dimension',
         is_config_by_user=True,
     )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='es_type',
+        value='date_nanos',
+        value_type='string',
+    )
+
     models.ResultTableFieldOption.objects.create(
         table_id=table_id,
         field_name='dtEventTimeStamp',
@@ -43,6 +52,55 @@ def create_or_delete_records(mocker):
         value='strict_date_optional_time_nanos',
         value_type='string',
     )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='time_format',
+        value='yyyy-MM-dd HH:mm:ss.SSSSSS',
+        value_type='string',
+    )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='time_zone',
+        value='8',
+        value_type='string',
+    )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='real_path',
+        value='bk_separator_object.log_time',
+        value_type='string',
+    )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='field_index',
+        value='1',
+        value_type='string',
+    )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='timestamp_unit',
+        value='µs',
+        value_type='string',
+    )
+
+    models.ResultTableFieldOption.objects.create(
+        table_id=table_id,
+        field_name='dtEventTimeStamp',
+        name='default_function',
+        value='fn:timestamp_from_utctime',
+        value_type='string',
+    )
+
     models.ResultTableFieldOption.objects.create(
         table_id=table_id,
         field_name='time',
@@ -50,6 +108,7 @@ def create_or_delete_records(mocker):
         value='strict_date_optional_time_nanos',
         value_type='string',
     )
+
     models.DataSource.objects.create(
         bk_data_id=100111,
         data_name="data_link_test",
@@ -96,33 +155,43 @@ def es_mapping_same(es_properties, current_mapping, alias_field_list):
 @pytest.mark.django_db(databases=["default", "monitor_api"])
 def test_notify_es_data_link_adapt_nano(create_or_delete_records):
     data = NotifyEsDataLinkAdaptNano().request(table_id=table_id)
-    expected = [
-        {
-            'field_name': 'dtEventTimeStamp',
-            'type': 'timestamp',
-            'tag': 'dimension',
-            'default_value': None,
-            'is_config_by_user': True,
-            'description': '数据时间',
-            'unit': '',
-            'alias_name': '',
-            'option': {'es_format': 'strict_date_optional_time_nanos||epoch_millis'},
-            'is_disabled': False,
-        },
-        {
-            'field_name': 'dtEventTimeStampNanos',
-            'type': 'timestamp',
-            'tag': 'dimension',
-            'default_value': None,
-            'is_config_by_user': True,
-            'description': '数据时间',
-            'unit': '',
-            'alias_name': '',
-            'option': {'es_type': 'date_nanos', 'es_format': 'strict_date_optional_time_nanos||epoch_millis'},
-            'is_disabled': False,
-        },
-    ]
-    assert json.dumps(data) == json.dumps(expected)
+
+    expected = [{'alias_name': '',
+                 'default_value': None,
+                 'description': '数据时间',
+                 'field_name': 'dtEventTimeStamp',
+                 'is_config_by_user': True,
+                 'is_disabled': False,
+                 'option': {'default_function': 'fn:timestamp_from_utctime',
+                            'es_format': 'strict_date_optional_time_nanos||epoch_millis',
+                            'es_type': 'date',
+                            'field_index': '1',
+                            'real_path': 'bk_separator_object.log_time',
+                            'time_format': 'yyyy-MM-dd HH:mm:ss.SSSSSS',
+                            'time_zone': '8',
+                            'timestamp_unit': 'µs'},
+                 'tag': 'dimension',
+                 'type': 'timestamp',
+                 'unit': ''},
+                {'alias_name': '',
+                 'default_value': None,
+                 'description': '数据时间',
+                 'field_name': 'dtEventTimeStampNanos',
+                 'is_config_by_user': True,
+                 'is_disabled': False,
+                 'option': {'default_function': 'fn:timestamp_from_utctime',
+                            'es_format': 'strict_date_optional_time_nanos||epoch_millis',
+                            'es_type': 'date_nanos',
+                            'field_index': '1',
+                            'real_path': 'bk_separator_object.log_time',
+                            'time_format': 'yyyy-MM-dd HH:mm:ss.SSSSSS',
+                            'time_zone': '8',
+                            'timestamp_unit': 'µs'},
+                 'tag': 'dimension',
+                 'type': 'timestamp',
+                 'unit': ''}]
+
+    assert data == expected
 
 
 @pytest.mark.django_db(databases=["default", "monitor_api"])
