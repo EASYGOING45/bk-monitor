@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 
 # -*- coding: utf-8 -*-
 from core.drf_resource import Resource
+from fta_web.alert.resources import AlertTopNResource as FtaAlertTopNResource
 from fta_web.alert.resources import ListAlertTagsResource  # noqa
 from fta_web.alert.resources import SearchAlertByEventResource, SearchAlertResource  # noqa
 from kernel_api.serializers.mixins import TimeSpanValidationPassThroughSerializer
@@ -22,3 +23,12 @@ class ListAlertResource(Resource):
 
     def perform_request(self, validated_request_data):
         return SearchAlertResource().request(**validated_request_data)
+
+
+class ListAlertTopNResource(Resource):
+    """告警 TopN 查询接口 (用于 AI MCP 请求)"""
+
+    RequestSerializer = TimeSpanValidationPassThroughSerializer
+
+    def perform_request(self, validated_request_data):
+        return FtaAlertTopNResource().request(**validated_request_data)
